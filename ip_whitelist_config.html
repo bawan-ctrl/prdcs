@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP白名单配置 - Hashrace管理平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 
+                         'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* 侧边菜单栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background: #001529;
+            color: rgba(255, 255, 255, 0.85);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .sidebar-logo-icon {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .sidebar-menu {
+            padding: 12px 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.75);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .menu-item.active {
+            background: #1890ff;
+            color: #fff;
+        }
+
+        .menu-item-icon {
+            width: 16px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        .menu-item.has-children {
+            position: relative;
+        }
+
+        .menu-item-arrow {
+            margin-left: auto;
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+
+        .menu-item.expanded .menu-item-arrow {
+            transform: rotate(180deg);
+        }
+
+        .submenu {
+            display: none;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .submenu.show {
+            display: block;
+        }
+
+        .submenu-item {
+            padding: 10px 20px 10px 46px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.75);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submenu-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .submenu-item.active {
+            background: #1890ff;
+            color: #fff;
+        }
+
+        /* 主体布局 */
+        .main-wrapper {
+            margin-left: 220px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 顶部Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+            z-index: 999;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.65);
+        }
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .breadcrumb-separator {
+            margin: 0 8px;
+            color: rgba(0, 0, 0, 0.45);
+        }
+
+        .breadcrumb-item.active {
+            color: rgba(0, 0, 0, 0.85);
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-ai-button {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            background: #1890ff;
+            color: #fff;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .header-ai-button:hover {
+            background: #40a9ff;
+        }
+
+        .header-avatar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .avatar-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        /* 内容区域 */
+        .content {
+            flex: 1;
+            padding: 24px;
+        }
+
+        .content-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: rgba(0, 0, 0, 0.85);
+            margin-bottom: 20px;
+        }
+
+        /* 警告框 */
+        .alert {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 16px;
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            border-radius: 4px;
+            margin-bottom: 24px;
+        }
+
+        .alert-icon {
+            font-size: 16px;
+            margin-right: 12px;
+            color: #faad14;
+            margin-top: 2px;
+        }
+
+        .alert-message {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(0, 0, 0, 0.85);
+        }
+
+        /* 表单 */
+        .form-item {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.85);
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(0, 0, 0, 0.85);
+            background: #fff;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            outline: none;
+            transition: all 0.3s;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-input:hover {
+            border-color: #40a9ff;
+        }
+
+        .form-input:focus {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #bfbfbf;
+        }
+
+        /* 按钮组 */
+        .button-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 24px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: #1890ff;
+            color: #fff;
+            border-color: #1890ff;
+        }
+
+        .btn-primary:hover {
+            background: #40a9ff;
+            border-color: #40a9ff;
+        }
+
+        .btn-primary:active {
+            background: #096dd9;
+            border-color: #096dd9;
+        }
+
+        .btn-primary:disabled {
+            background: #f5f5f5;
+            border-color: #d9d9d9;
+            color: rgba(0, 0, 0, 0.25);
+            cursor: not-allowed;
+        }
+
+        .btn-default {
+            background: #fff;
+            color: rgba(0, 0, 0, 0.85);
+            border-color: #d9d9d9;
+        }
+
+        .btn-default:hover {
+            color: #40a9ff;
+            border-color: #40a9ff;
+        }
+
+        .btn-default:active {
+            color: #096dd9;
+            border-color: #096dd9;
+        }
+
+        /* 确认弹窗遮罩 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        /* 确认弹窗 */
+        .modal {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 480px;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-title-icon {
+            font-size: 22px;
+        }
+
+        .modal-title {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 600;
+            color: rgba(0, 0, 0, 0.85);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(0, 0, 0, 0.65);
+            margin-bottom: 16px;
+        }
+
+        .modal-ip-preview {
+            padding: 12px;
+            background: #fafafa;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            color: rgba(0, 0, 0, 0.85);
+            max-height: 120px;
+            overflow-y: auto;
+            word-break: break-all;
+        }
+
+        .modal-ip-preview.empty {
+            color: #ff4d4f;
+            font-weight: 500;
+        }
+
+        .modal-footer {
+            padding: 12px 24px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Toast提示 */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #52c41a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .toast-message {
+            font-size: 14px;
+        }
+
+        /* 加载状态 */
+        .btn .loading-icon {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: -2px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-wrapper {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边菜单栏 -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-icon">🏁</div>
+            <span>Hashrace管理平台</span>
+        </div>
+        
+        <div class="sidebar-menu">
+            <div class="menu-item">
+                <span class="menu-item-icon">🏠</span>
+                <span>首页</span>
+            </div>
+            
+            <div class="menu-item has-children">
+                <span class="menu-item-icon">👥</span>
+                <span>合伙人中心</span>
+                <span class="menu-item-arrow">▼</span>
+            </div>
+            
+            <div class="menu-item has-children">
+                <span class="menu-item-icon">🔄</span>
+                <span>兑换中心</span>
+                <span class="menu-item-arrow">▼</span>
+            </div>
+            
+            <div class="menu-item has-children">
+                <span class="menu-item-icon">👤</span>
+                <span>会员中心</span>
+                <span class="menu-item-arrow">▼</span>
+            </div>
+            
+            <div class="menu-item has-children">
+                <span class="menu-item-icon">🎮</span>
+                <span>游戏中心</span>
+                <span class="menu-item-arrow">▼</span>
+            </div>
+            
+            <div class="menu-item has-children">
+                <span class="menu-item-icon">🎪</span>
+                <span>活动中心</span>
+                <span class="menu-item-arrow">▼</span>
+            </div>
+            
+            <div class="menu-item has-children">
+                <span class="menu-item-icon">📝</span>
+                <span>内容管理</span>
+                <span class="menu-item-arrow">▼</span>
+            </div>
+            
+            <div class="menu-item has-children">
+                <span class="menu-item-icon">📢</span>
+                <span>短信管理</span>
+                <span class="menu-item-arrow">▼</span>
+            </div>
+            
+            <div class="menu-item has-children">
+                <span class="menu-item-icon">📊</span>
+                <span>平台参数管理</span>
+                <span class="menu-item-arrow">▼</span>
+            </div>
+            
+            <div class="menu-item has-children expanded" id="systemToolMenu">
+                <span class="menu-item-icon">⚙️</span>
+                <span>系统工具</span>
+                <span class="menu-item-arrow">▼</span>
+            </div>
+            <div class="submenu show">
+                <div class="submenu-item">系统配置</div>
+                <div class="submenu-item">模板配置</div>
+                <div class="submenu-item">代码生成器</div>
+                <div class="submenu-item">自动化代码管理</div>
+                <div class="submenu-item active">IP白名单配置</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主体区域 -->
+    <div class="main-wrapper">
+        <!-- 顶部Header -->
+        <div class="header">
+            <div class="breadcrumb">
+                <div class="breadcrumb-item">系统工具</div>
+                <div class="breadcrumb-separator">/</div>
+                <div class="breadcrumb-item active">系统配置</div>
+            </div>
+            
+            <div class="header-right">
+                <div class="header-ai-button">
+                    <span>💬</span>
+                    <span>Hashrace AI助手 (Beta)</span>
+                </div>
+                
+                <div class="header-avatar">
+                    <div class="avatar-img">李</div>
+                    <span>李大壮</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content">
+            <div class="content-card">
+                <h1 class="page-title">IP白名单配置</h1>
+                
+                <!-- 警告提示 -->
+                <div class="alert">
+                    <div class="alert-icon">⚠️</div>
+                    <div class="alert-message">
+                        <strong>警告：</strong>IP白名单为系统最高安全权限控制。开启后仅允许名单内的 IP 访问后台。请务必包含您当前的 IP，留空则表示不限制。
+                    </div>
+                </div>
+
+                <!-- 表单 -->
+                <form id="ipForm">
+                    <div class="form-item">
+                        <label class="form-label">允许访问的IP</label>
+                        <textarea 
+                            id="ipInput"
+                            class="form-input"
+                            placeholder="请输入IP地址，多个IP请使用英文逗号隔开，例如：192.168.1.1, 10.0.0.1"
+                        ></textarea>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            立即更新
+                        </button>
+                        <button type="button" class="btn btn-default" id="resetBtn">
+                            重置
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast提示 -->
+    <div class="toast" id="toast">
+        <div class="toast-icon">✓</div>
+        <div class="toast-message" id="toastMessage">已添加到剪贴板</div>
+    </div>
+
+    <!-- 确认弹窗 -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title-icon">⚠️</span>
+                <h3 class="modal-title">确认更新IP白名单</h3>
+            </div>
+            <div class="modal-body">
+                <div class="modal-content">
+                    您即将更新IP白名单配置。此操作将影响系统安全访问控制，请确认以下IP地址正确无误：
+                </div>
+                <div class="modal-ip-preview" id="modalIpPreview"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" id="modalCancelBtn">
+                    取消
+                </button>
+                <button type="button" class="btn btn-primary" id="modalConfirmBtn">
+                    确认更新
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 菜单展开/收起
+        document.querySelectorAll('.menu-item.has-children').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const submenu = this.nextElementSibling;
+                if (submenu && submenu.classList.contains('submenu')) {
+                    this.classList.toggle('expanded');
+                    submenu.classList.toggle('show');
+                }
+            });
+        });
+
+        // 表单元素
+        const ipInput = document.getElementById('ipInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const ipForm = document.getElementById('ipForm');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalIpPreview = document.getElementById('modalIpPreview');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+
+        // 当前待提交的IP值
+        let pendingIpValue = '';
+
+        // 显示Toast
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // 显示确认弹窗
+        function showModal(ipValue) {
+            pendingIpValue = ipValue;
+            
+            if (ipValue.trim() === '') {
+                modalIpPreview.textContent = '（未设置任何IP，系统将允许所有IP访问）';
+                modalIpPreview.classList.add('empty');
+            } else {
+                modalIpPreview.textContent = ipValue;
+                modalIpPreview.classList.remove('empty');
+            }
+            
+            modalOverlay.classList.add('show');
+            document.body.style.overflow = 'hidden'; // 禁止背景滚动
+        }
+
+        // 隐藏确认弹窗
+        function hideModal() {
+            modalOverlay.classList.remove('show');
+            document.body.style.overflow = ''; // 恢复滚动
+            pendingIpValue = '';
+        }
+
+        // 执行更新操作
+        function performUpdate() {
+            hideModal();
+            
+            // 禁用按钮，显示加载状态
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading-icon"></span>更新中...';
+            
+            // 模拟请求延迟
+            setTimeout(() => {
+                // 复制到剪贴板
+                if (pendingIpValue.trim()) {
+                    navigator.clipboard.writeText(pendingIpValue).then(() => {
+                        showToast('✓ 更新成功，IP已添加到剪贴板');
+                        // 清空输入框，表示已保存
+                        ipInput.value = pendingIpValue;
+                    }).catch(() => {
+                        showToast('✓ IP白名单更新成功');
+                        ipInput.value = pendingIpValue;
+                    });
+                } else {
+                    showToast('✓ IP白名单已清空，系统允许所有IP访问');
+                    ipInput.value = '';
+                }
+                
+                // 恢复按钮状态
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '立即更新';
+            }, 500);
+        }
+
+        // 表单提交 - 先进行校验，再弹出确认框
+        ipForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const ipValue = ipInput.value.trim();
+            
+            // 检查是否包含中文逗号
+            if (ipValue && (ipValue.includes('،') || ipValue.includes('、') || /[，]/g.test(ipValue))) {
+                alert('⚠️ 检测到中文逗号\n\n请使用英文逗号（,）分隔IP地址，不要使用中文逗号（，）\n\n示例：192.168.1.1, 10.0.0.1');
+                return;
+            }
+            
+            // 校验通过，显示二次确认弹窗
+            showModal(ipValue);
+        });
+
+        // 弹窗取消按钮
+        modalCancelBtn.addEventListener('click', function() {
+            hideModal();
+        });
+
+        // 弹窗确认按钮
+        modalConfirmBtn.addEventListener('click', function() {
+            performUpdate();
+        });
+
+        // 点击遮罩关闭弹窗
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) {
+                hideModal();
+            }
+        });
+
+        // ESC键关闭弹窗
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modalOverlay.classList.contains('show')) {
+                hideModal();
+            }
+        });
+
+        // 重置按钮
+        resetBtn.addEventListener('click', function() {
+            if (ipInput.value.trim() === '') {
+                showToast('📝 输入框已经是空的了');
+                return;
+            }
+            
+            if (confirm('确定要重置所有内容吗？\n\n这将清空您输入的所有IP地址。')) {
+                ipInput.value = '';
+                showToast('✓ 已重置');
+            }
+        });
+    </script>
+</body>
+</html>
